@@ -41,7 +41,7 @@ CATEGORICAL_FEATURES = [
 ]
 
 
-def create_preprocessor() -> ColumnTransformer:
+def create_preprocessor(include_cluster: bool = False) -> ColumnTransformer:
  
     numeric_pipeline = Pipeline(
         [
@@ -55,10 +55,11 @@ def create_preprocessor() -> ColumnTransformer:
             ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
         ]
     )
+    categorical_features = CATEGORICAL_FEATURES + (["cluster"] if include_cluster else [])
     return ColumnTransformer(
         [
             ("num", numeric_pipeline, NUMERIC_FEATURES),
-            ("cat", categorical_pipeline, CATEGORICAL_FEATURES),
+            ("cat", categorical_pipeline, categorical_features),
         ],
         verbose_feature_names_out=False,
     )
@@ -66,7 +67,11 @@ def create_preprocessor() -> ColumnTransformer:
 
 def engineer_features(data: pd.DataFrame) -> pd.DataFrame:
 
-    required_columns = {"customerID", TARGET, *NUMERIC_FEATURES[:4], *CATEGORICAL_FEATURES}
+    required_columns = {
+        "Contract",
+        *NUMERIC_FEATURES[:4],
+        *CATEGORICAL_FEATURES,
+    }
     missing_columns = required_columns.difference(data.columns)
     if missing_columns:
         raise ValueError(f"Missing required columns: {sorted(missing_columns)}")
@@ -97,7 +102,7 @@ def engineer_features(data: pd.DataFrame) -> pd.DataFrame:
     )
     if result["ContractLevel"].isna().any():
         raise ValueError("Contract contains an unknown category")
-    return result.drop(columns=["customerID", "Contract"])
+    return result.drop(columns=["customerID", "Contract"], errors="ignore")
 
 
 def process_data(
