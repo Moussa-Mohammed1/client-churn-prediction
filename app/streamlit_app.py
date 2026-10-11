@@ -1,11 +1,16 @@
 from pathlib import Path
+import sys
 
 import streamlit as st
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.modeling import predict_customer
 
 
-DEFAULT_BUNDLE = Path("data/processed/model_bundle.joblib")
+DEFAULT_BUNDLE = PROJECT_ROOT / "data/processed/model_bundle.joblib"
 
 st.set_page_config(page_title="Client churn", page_icon="📊", layout="wide")
 st.title("Prédiction du churn client")
